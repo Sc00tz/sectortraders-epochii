@@ -1,8 +1,9 @@
 {
   "name": "sectortraders",
-  "private": true,
+  "private": false,
   "version": "0.1.0",
   "description": "Sector Traders: Epoch II - a web-based multiplayer space trading game",
+  "license": "MIT",
   "workspaces": ["packages/*", "apps/*"],
   "engines": { "node": ">=22" },
   "scripts": {

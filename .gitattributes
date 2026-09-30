@@ -1,0 +1,16 @@
+# Store every text file with LF in the repo, whatever the contributor's
+# core.autocrlf happens to be. Checkout stays native unless listed below.
+* text=auto
+
+# These are read by Linux inside the container (or by Postgres), so they need
+# LF in the working tree too, not just in the repo.
+Dockerfile   text eol=lf
+*.sh         text eol=lf
+*.sql        text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
+.dockerignore text eol=lf
+
+# Binary assets: never line-ending-normalized, never diffed as text.
+*.png binary
+*.jpg binary

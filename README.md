@@ -20,6 +20,7 @@ This README covers **setting up and running a server**. For how to play, open th
 10. [Admin tasks](#admin-tasks)
 11. [Troubleshooting](#troubleshooting)
 12. [Development](#development)
+13. [License](#license)
 
 ## What you need
 
@@ -34,7 +35,7 @@ The stack builds its own images from this repo; nothing is pulled from a registr
 **1. Get the code.**
 
 ```bash
-git clone https://git.scootz.net/travis/sectortraders-epochII.git sectortraders
+git clone https://github.com/Sc00tz/sectortraders-epochii.git sectortraders
 cd sectortraders
 ```
 
@@ -234,3 +235,7 @@ apps/web          React UI, PixiJS sector view and galaxy map, sprites in public
 ```
 
 The design spec (rules, open questions, art prompts) lives in the project's Claude Docs spec, not in this repo.
+
+## License
+
+MIT — see [LICENSE](LICENSE). The sprite art and guide screenshots in `apps/web/public/` are covered by the same license.
