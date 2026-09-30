@@ -156,6 +156,12 @@ export function Guide({ onBack, backLabel }: { onBack: () => void; backLabel: st
               blocked, or arrive somewhere dangerous (enemy fighters, a fortified enemy planet, or a hostile ship).
             </p>
             <Shot src="map.png" caption="The galaxy map shows sectors you've visited (with port classes) and their neighbours. Scroll to zoom, drag to pan, click a sector to plot a course." />
+            <h3>Bookmarks</h3>
+            <p>
+              Give any sector a name of your own in the <b>Bookmark</b> row of the sector panel — "Main planet", "Cheap ore",
+              "Tavern" — and it appears in the <b>Bookmarks</b> bar under Plot course, where one press plots a route back to
+              it. Names are yours alone; nobody else sees them, and you can keep {n(S.maxBookmarks)} of them.
+            </p>
             <h3>Core Space</h3>
             <p>
               Sectors 1–{S.fedspaceSectors} (plus {PLACE.keystone}) are <b>{PLACE.core}</b>, policed by the Sector Authority.
@@ -275,6 +281,13 @@ export function Guide({ onBack, backLabel }: { onBack: () => void; backLabel: st
               alignment to {n(S.commissionGrant)} and lets you buy the Warden. Anyone can post a <b>bounty</b> (at
               least {n(S.bountyMin)} credits) on an evil pilot; whoever destroys that pilot collects it, and posting earns you
               alignment. The office also shows the Most Wanted list.
+            </p>
+            <h3>The hardship fund</h3>
+            <p>
+              Spent everything and have nothing left to sell? Dock at Keystone Station and the Authority office will stake
+              you {n(S.reliefGrant)} credits, once a game day. It's a last resort, so the clerk turns you away if you still
+              have cargo in your holds, a planet of your own, credits of {n(S.reliefGrant)} or more, or a corporation with a
+              treasury to draw on. No trader need ever be stranded for good.
             </p>
           </Section>
 

@@ -11,7 +11,7 @@ import { Mail, mailSector, pruneMessages, unreadCount } from "./messages";
 import { dailyPlanets, interdicted, planetDefenses, planetSummaries } from "./planets";
 import { ensureNpcs, hostileTo, npcAmbush, npcDestroyed, npcInfo } from "./npc";
 import { dailyGear } from "./gear";
-import { pruneInactive } from "./cleanup";
+import { pruneInactive, removePlayer } from "./cleanup";
 import { payBounties } from "./office";
 
 export class GameError extends Error {
@@ -133,6 +133,33 @@ export async function joinGame(gameId: number, userId: number, alias: string) {
   });
   events.emit(gameId, { kind: "arrive", sector: 1, alias, ship: p.ship, message: `${alias} has entered the universe.` });
   return p;
+}
+
+/**
+ * Leave a galaxy for good, by choice. The pilot is torn down exactly as an inactive one is
+ * (see `removePlayer`): the corporation gets a new CEO, planets pass to a corpmate or go unowned,
+ * bounties on them are refunded, and everything they'd deployed is lost.
+ *
+ * The account keeps its other galaxies and may join this one again later as a brand new pilot, so
+ * this is destructive but not permanent. `confirm` must be the trader's own name, which is the only
+ * thing standing between a misclick and an afternoon's work.
+ */
+export async function leaveGame(gameId: number, userId: number, confirm: string) {
+  const game = await loadGame(gameId);
+  const me = await requirePlayer(gameId, userId);
+  if (confirm.trim().toLowerCase() !== me.alias.trim().toLowerCase()) {
+    throw new GameError(`Type your trader name (${me.alias}) to confirm you want to leave`);
+  }
+  await withMail(gameId, async (tx, mail) => {
+    const p = await lockPlayer(tx, me.id);
+    await removePlayer(tx, gameId, p, mail, "has left the galaxy");
+    // Told after the delete, so the leaver isn't in the list (and mail to them is dropped anyway).
+    const rest = await tx.select({ id: schema.players.id }).from(schema.players)
+      .where(and(eq(schema.players.gameId, gameId), isNull(schema.players.npc)));
+    for (const r of rest) mail.to(r.id, "info", `${me.alias} has left ${game.name}. Their fighters, mines and beacons are gone.`);
+  });
+  events.emit(gameId, { kind: "depart", sector: me.sector, alias: me.alias, message: `${me.alias} has left the galaxy.` });
+  return { ok: true };
 }
 
 export async function playerFor(gameId: number, userId: number): Promise<PlayerRow | null> {

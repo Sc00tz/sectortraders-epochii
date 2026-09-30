@@ -150,8 +150,8 @@ docker compose up -d --build
 What that does to a running game:
 
 - `app` and `worker` are rebuilt and recreated. Players' browsers lose their connection for a few seconds and reconnect on their own. **Anyone in the middle of haggling loses that negotiation** and has to ask the port for a new price. Nothing else is lost.
-- New database migrations run on start. So far they only add tables and columns, so accounts and galaxies carry over. The commit messages say when a migration is included.
-- New settings get their defaults in existing galaxies. Check the admin settings page after upgrading in case a new one needs tuning.
+- New database migrations run on start. So far they only add tables and columns, so accounts and galaxies carry over. [CHANGELOG.md](CHANGELOG.md) says which releases include a migration.
+- New settings get their defaults in existing galaxies. Check the admin settings page after upgrading in case a new one needs tuning; [CHANGELOG.md](CHANGELOG.md) lists the new ones for each release.
 
 ## What's safe to restart or rebuild
 

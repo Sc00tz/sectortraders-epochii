@@ -97,6 +97,7 @@ export const players = pgTable("players", {
   gear: jsonb("gear").$type<Gear>().notNull().default({}),
   cloaked: boolean("cloaked").notNull().default(false),
   corpId: integer("corp_id").references((): AnyPgColumn => corporations.id, { onDelete: "set null" }),
+  lastReliefAt: timestamp("last_relief_at", { withTimezone: true }), // last Authority hardship payout; null = never claimed
 }, (t) => [
   uniqueIndex("players_game_user_idx").on(t.gameId, t.userId),
   uniqueIndex("players_game_alias_idx").on(t.gameId, t.alias),
@@ -208,6 +209,17 @@ export const bounties = pgTable("bounties", {
   amount: bigint("amount", { mode: "number" }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index("bounties_target_idx").on(t.targetId)]);
+
+/**
+ * A sector a trader has named for themselves ("main planet", "cheap ore"). Private to that trader,
+ * one name per sector, and kept separate from `visited` so bookmarks don't bloat the largest table.
+ */
+export const bookmarks = pgTable("bookmarks", {
+  playerId: integer("player_id").notNull().references(() => players.id, { onDelete: "cascade" }),
+  sectorId: integer("sector_id").notNull(),
+  label: text("label").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.playerId, t.sectorId] })]);
 
 /** Notices pinned to the Keystone Station tavern board. */
 export const tavernPosts = pgTable("tavern_posts", {

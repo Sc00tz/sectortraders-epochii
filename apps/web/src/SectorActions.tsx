@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { PLACE, FACTIONS, PLANET_CLASSES, SHIP_TYPES, type ActionResultDto, type FighterMode, type PlanetClassId, type StateDto } from "@st/shared";
+import { PLACE, FACTIONS, PLANET_CLASSES, SHIP_TYPES, type ActionResultDto, type BookmarkDto, type FighterMode, type PlanetClassId, type StateDto } from "@st/shared";
 import { api, fmt } from "./api";
 import { CorpEmblem } from "./CorpEmblem";
+
+/** Kept in step with `MAX_LABEL` in the server's bookmarks module, which is the real limit. */
+const MAX_LABEL = 40;
 
 const MODES: { id: FighterMode; label: string; hint: string }[] = [
   { id: "defensive", label: "Defensive", hint: "block anyone passing through" },
@@ -10,12 +13,14 @@ const MODES: { id: FighterMode; label: string; hint: string }[] = [
 ];
 
 /** Blockades, deployed fighters, mines, and other traders in the current sector. */
-export function SectorActions({ gameId, state, onState, onResult, onRetreat, onLanded }: {
+export function SectorActions({ gameId, state, onState, onResult, onRetreat, onLanded, marks, onMarks }: {
   gameId: number; state: StateDto;
   onState: (s: StateDto) => void;
   onResult: (r: ActionResultDto) => void;
   onRetreat: (to: number) => void;
   onLanded: () => void;
+  marks: BookmarkDto[];
+  onMarks: (b: BookmarkDto[]) => void;
 }) {
   const p = state.player;
   const sec = state.sector;
@@ -46,6 +51,8 @@ export function SectorActions({ gameId, state, onState, onResult, onRetreat, onL
     ] });
   });
   const canDeploy = !sec.fedspace && p.ship !== "escape_pod" && (!stack || stack.mine);
+  const mark = marks.find((b) => b.sector === sec.id);
+  const markText = (count.mark ?? mark?.label ?? "").trim();
 
   return (
     <div className="sector-actions">
@@ -146,6 +153,19 @@ export function SectorActions({ gameId, state, onState, onResult, onRetreat, onL
           {sec.beacon.mine && <button className="link" disabled={busy} onClick={() => run(async () => onState(await api.removeBeacon(gameId)))}>Take it down</button>}
         </div>
       )}
+
+      {/* A private note to yourself, so you can find this sector again from the bookmark bar above. */}
+      <div className="action-row">
+        <span className="label">Bookmark</span>
+        <input value={count.mark ?? mark?.label ?? ""} maxLength={MAX_LABEL}
+          placeholder={`Name sector ${sec.id}, e.g. "Main planet"`}
+          onChange={(e) => setCount({ ...count, mark: e.target.value })} />
+        <button disabled={busy || !markText || markText === mark?.label}
+          onClick={() => run(async () => onMarks(await api.setBookmark(gameId, sec.id, markText)))}>
+          {mark ? "Rename" : "Save"}
+        </button>
+        {mark && <button className="link" disabled={busy} onClick={() => run(async () => onMarks(await api.removeBookmark(gameId, sec.id)))}>Remove</button>}
+      </div>
 
       {hasGear && (
         <div className="gear-actions">

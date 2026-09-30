@@ -170,6 +170,22 @@ export interface MapDto {
   current: number;
 }
 
+/** A sector a trader has given a name of their own, so they can find it again. */
+export interface BookmarkDto {
+  sector: number;
+  label: string;
+}
+
+/**
+ * The Authority's hardship fund, as offered at Keystone Station. `available` is false with a
+ * `reason` when the pilot still has something to sell, or has already claimed today.
+ */
+export interface ReliefDto {
+  available: boolean;
+  grant: number;
+  reason: string | null;
+}
+
 export interface QuoteDto {
   commodity: Commodity;
   dir: TradeDir; // port side

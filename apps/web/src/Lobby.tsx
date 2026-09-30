@@ -11,6 +11,8 @@ export function Lobby({ me, onEnter, onAdmin, onLogout }: { me: MeDto; onEnter: 
   const [newSectors, setNewSectors] = useState(1000);
   const [busy, setBusy] = useState(false);
   const [advanced, setAdvanced] = useState(false);
+  const [leaving, setLeaving] = useState<number | null>(null); // game whose "leave for good" panel is open
+  const [confirm, setConfirm] = useState("");
 
   const load = () => api.games().then(setGames).catch((e) => setError(e.message));
   useEffect(() => { load(); }, []);
@@ -18,6 +20,12 @@ export function Lobby({ me, onEnter, onAdmin, onLogout }: { me: MeDto; onEnter: 
   const join = async (g: GameSummaryDto) => {
     setError("");
     try { await api.join(g.id, aliases[g.id] ?? ""); onEnter(g.id); } catch (e) { setError((e as Error).message); }
+  };
+  const leave = async (g: GameSummaryDto) => {
+    setBusy(true); setError("");
+    try { await api.leaveGame(g.id, confirm); setLeaving(null); setConfirm(""); await load(); }
+    catch (e) { setError((e as Error).message); }
+    setBusy(false);
   };
   const create = async (settings: Record<string, unknown>) => {
     if (newName.trim().length < 3) { setError("Give the galaxy a name first (3 or more characters)"); return; }
@@ -50,11 +58,30 @@ export function Lobby({ me, onEnter, onAdmin, onLogout }: { me: MeDto; onEnter: 
                 </div>
                 {me.isAdmin && <button className="link" onClick={() => onAdmin(g.id)}>Settings</button>}
                 {g.joined ? (
-                  <button className="primary" onClick={() => onEnter(g.id)}>Play as {g.alias}</button>
+                  <div className="join-row">
+                    <button className="primary" onClick={() => onEnter(g.id)}>Play as {g.alias}</button>
+                    <button className="link" onClick={() => { setLeaving(leaving === g.id ? null : g.id); setConfirm(""); setError(""); }}>Leave galaxy</button>
+                  </div>
                 ) : (
                   <div className="join-row">
                     <input placeholder="Trader name" value={aliases[g.id] ?? ""} onChange={(e) => setAliases({ ...aliases, [g.id]: e.target.value })} />
                     <button className="primary" onClick={() => join(g)}>Join</button>
+                  </div>
+                )}
+                {leaving === g.id && (
+                  <div className="leave-row">
+                    <div className="muted small">
+                      This deletes {g.alias} from {g.name} for good: the ship, credits, holds, fighters, mines, beacons and bookmarks all go.
+                      Planets pass to a corpmate if you have one, or become unclaimed. Your account and your other galaxies are untouched,
+                      and you can join {g.name} again later as a brand new trader.
+                    </div>
+                    <div className="join-row">
+                      <input placeholder={`Type ${g.alias} to confirm`} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+                      <button className="danger" disabled={busy || confirm.trim().toLowerCase() !== (g.alias ?? "").trim().toLowerCase()} onClick={() => leave(g)}>
+                        Leave for good
+                      </button>
+                      <button className="link" onClick={() => { setLeaving(null); setConfirm(""); }}>Cancel</button>
+                    </div>
                   </div>
                 )}
               </div>

@@ -68,6 +68,10 @@ export function ShipPanel({ gameId, state, me, onAdminReset }: { gameId: number;
         ? <p className="muted small">No limpets attached to anyone. Lay limpet mines where traders pass to track them.</p>
         : <ul className="tracks">{tracks.map((t) => <li key={t.targetId}>{t.alias} <span className="muted">is in sector</span> {t.sector}</li>)}</ul>}
 
+      <p className="muted small">
+        Flat broke with empty holds? {PLACE.keystone}'s Authority office runs a hardship fund.
+        Done with this galaxy for good? Go back to the galaxy list from the title in the top left and leave from there.
+      </p>
       {me.isAdmin && <button className="link" onClick={onAdminReset}>Admin: run daily reset now</button>}
     </div>
   );

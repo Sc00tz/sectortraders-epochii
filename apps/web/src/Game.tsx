@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
-import { PLACE, SHIP_TYPES, rankTitle, type ActionResultDto, type MeDto, type MessageDto, type SectorEventDto, type StateDto } from "@st/shared";
+import { PLACE, SHIP_TYPES, rankTitle, type ActionResultDto, type BookmarkDto, type MeDto, type MessageDto, type SectorEventDto, type StateDto } from "@st/shared";
 import { api, fmt } from "./api";
 import { SectorScene } from "./SectorScene";
 import { GalaxyMap } from "./GalaxyMap";
@@ -17,6 +17,7 @@ export function Game({ gameId, me, onExit, onLogout }: { gameId: number; me: MeD
   const [view, setView] = useState<"sector" | "map">("sector");
   const [tab, setTab] = useState<"port" | "planet" | "ship" | "corp" | "log">("port");
   const [log, setLog] = useState<MessageDto[]>([]);
+  const [marks, setMarks] = useState<BookmarkDto[]>([]);
   const [away, setAway] = useState<number | null>(null); // unread count when you arrived
   const [report, setReport] = useState<string[]>([]);
   const [target, setTarget] = useState("");
@@ -32,6 +33,7 @@ export function Game({ gameId, me, onExit, onLogout }: { gameId: number; me: MeD
   useEffect(() => {
     api.state(gameId).then((s) => { setState(s); if (s.player.unread > 0) setAway(s.player.unread); }).catch((e) => setError(e.message));
     loadLog();
+    api.bookmarks(gameId).then(setMarks).catch(() => {});
   }, [gameId, loadLog]);
 
   // Live updates: this game's rooms, re-joined after every move (the sector room changes).
@@ -164,7 +166,20 @@ export function Game({ gameId, me, onExit, onLogout }: { gameId: number; me: MeD
                 </>
               )}
             </form>
-            <SectorActions key={sec.id} gameId={gameId} state={state} onState={setState} onResult={onResult} onRetreat={warp} onLanded={() => setTab("planet")} />
+            {marks.length > 0 && (
+              <div className="marks">
+                <span className="label">Bookmarks</span>
+                {marks.map((b) => (
+                  <button key={b.sector} disabled={busy || b.sector === p.sector}
+                    title={b.sector === p.sector ? "You're here" : `Plot a course to sector ${b.sector}`}
+                    onClick={() => { setTarget(String(b.sector)); plot(b.sector); }}>
+                    {b.sector} · {b.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <SectorActions key={sec.id} gameId={gameId} state={state} onState={setState} onResult={onResult} onRetreat={warp}
+              onLanded={() => setTab("planet")} marks={marks} onMarks={setMarks} />
             {error && <div className="error">{error}</div>}
           </div>
         </section>
