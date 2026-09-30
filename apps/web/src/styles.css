@@ -76,6 +76,8 @@ label.inline { flex-direction: row; align-items: center; gap: 8px; }
 .game-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .game-card > div:first-child { flex: 1; }
 .join-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.leave-row { flex-basis: 100%; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+.leave-row input { flex: 1; min-width: 180px; }
 
 /* Game */
 .game { height: 100%; display: flex; flex-direction: column; }
@@ -95,10 +97,12 @@ label.inline { flex-direction: row; align-items: center; gap: 8px; }
 .nav { display: flex; flex-direction: column; gap: 10px; }
 .nav-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .nav-head h2 { margin: 0; }
-.warps, .course { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.warps, .course, .marks { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .warps button { min-width: 56px; font-weight: 600; }
 .course input { width: 110px; }
 .route { color: var(--gold); font-size: 13px; }
+.marks .label { min-width: 84px; }
+.marks button { font-size: 12px; padding: 3px 8px; }
 
 .side-panel { flex: 1; overflow: auto; }
 .ship { display: flex; flex-direction: column; align-items: center; gap: 8px; }

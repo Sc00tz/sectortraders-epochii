@@ -1,9 +1,9 @@
 import { and, eq, sql } from "drizzle-orm";
 import { PLACE,
   GEAR, MINE_NAME, SHIP_TYPES, fedProtected, gearDef, holdsCost, resolveCombat, type GearId,
-  type ActionResultDto, type FighterMode, type LimpetTrackDto, type ShipyardEntryDto,
+  type ActionResultDto, type FighterMode, type GameSettings, type LimpetTrackDto, type ReliefDto, type ShipyardEntryDto,
 } from "@st/shared";
-import { db, schema } from "./db";
+import { db, schema, type Tx } from "./db";
 import { corbomite } from "./gear";
 import {
   GameError, destroyShip, events, friendlyOwner, getState, isFedspace, loadGame, lockPlayer, portHere, requirePlayer,
@@ -161,6 +161,65 @@ export async function buyShip(gameId: number, userId: number, shipId: string) {
     await setPlayer(tx, p.id, { ship: t.id, holds, fighters, shields, credits: p.credits - entry.net, gear });
     if (droppedDrive) mail.to(p.id, "shop", `Your TransWarp drive doesn't fit a ${t.name}; the yard kept it.`);
     mail.to(p.id, "shop", `Bought a ${t.name} for ${entry.price.toLocaleString()} credits${entry.tradeIn ? ` less ${entry.tradeIn.toLocaleString()} trade-in` : ""}.${lost ? ` ${lost.toLocaleString()} fighters and shields didn't fit and were scrapped.` : ""}`);
+  });
+  return getState(gameId, userId);
+}
+
+// ---------- the Authority's hardship fund ----------
+
+/**
+ * Why this pilot can't be staked, or null if they can.
+ *
+ * The free-hull rule in `shipyard` above only rescues a pilot sitting in an escape pod. A trader who
+ * simply spends their last credit keeps their hull and has no way back at all: trading needs capital,
+ * stealing needs a criminal record, and trading a hull down pays nothing (`net` is floored at zero).
+ * This is that missing floor.
+ *
+ * It's deliberately hard to qualify for, because a handout you can reach while still solvent is a
+ * money pump: two pilots could ferry credits to each other and claim it repeatedly. So the pilot must
+ * have no credits worth the name, empty holds, no planet whose treasury they could draw on, and no
+ * corporate treasury to fall back on. Fighters and shields don't disqualify anyone, since there's no
+ * way to sell them back.
+ */
+async function reliefBlocker(conn: Tx | typeof db, s: GameSettings, lastResetAt: Date, p: PlayerRow): Promise<string | null> {
+  if (!s.reliefEnabled) return "The Authority runs no hardship fund in this galaxy";
+  // One claim per game day, measured against the reset rather than the clock.
+  if (p.lastReliefAt && p.lastReliefAt >= lastResetAt) return "You've drawn on the fund already today. The next reset makes you eligible again.";
+  if (p.credits >= s.reliefGrant) return `The fund is for pilots with nothing left. Come back under ${s.reliefGrant.toLocaleString()} credits.`;
+  if (usedHolds(p) > 0) return "Sell what's in your holds first; the fund is a last resort";
+  const [planet] = await conn.select({ id: schema.planets.id }).from(schema.planets)
+    .where(and(eq(schema.planets.gameId, p.gameId), eq(schema.planets.ownerId, p.id))).limit(1);
+  if (planet) return "You own a planet. Draw on its treasury instead.";
+  if (p.corpId) {
+    const [c] = await conn.select({ name: schema.corporations.name, credits: schema.corporations.credits })
+      .from(schema.corporations).where(eq(schema.corporations.id, p.corpId)).limit(1);
+    if (c && c.credits >= s.reliefGrant) return `${c.name} still has a treasury. Withdraw from your corporation instead.`;
+  }
+  return null;
+}
+
+/** What the fund would say if this pilot asked. Location isn't checked here; claiming checks it. */
+export async function reliefOffer(gameId: number, userId: number): Promise<ReliefDto> {
+  const g = await loadGame(gameId);
+  const p = await requirePlayer(gameId, userId);
+  const reason = await reliefBlocker(db, g.settings, g.lastResetAt, p);
+  return { available: !reason, grant: g.settings.reliefGrant, reason };
+}
+
+export async function claimRelief(gameId: number, userId: number) {
+  const g = await loadGame(gameId);
+  const s = g.settings;
+  const me = await requirePlayer(gameId, userId);
+  if (!me.docked) throw new GameError("Dock at the port first");
+  const port = await portHere(db, gameId, me.sector);
+  if (!port || port.cls !== 9) throw new GameError(`The hardship fund is only administered at ${PLACE.keystone}`);
+  await withMail(gameId, async (tx, mail) => {
+    const p = await lockPlayer(tx, me.id);
+    // Re-checked under the lock: holds and credits can change between asking and claiming.
+    const reason = await reliefBlocker(tx, s, g.lastResetAt, p);
+    if (reason) throw new GameError(reason);
+    await setPlayer(tx, p.id, { credits: p.credits + s.reliefGrant, lastReliefAt: new Date() });
+    mail.to(p.id, "shop", `The Authority's hardship fund staked you ${s.reliefGrant.toLocaleString()} credits at ${PLACE.keystone}. Don't spend it all at once.`);
   });
   return getState(gameId, userId);
 }

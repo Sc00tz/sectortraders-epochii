@@ -1,6 +1,6 @@
 import type {
-  ActionResultDto, BountyDto, CorpPlanetDto, TavernPostDto, CorpDto, GameSettings, PlanetDto, FighterMode, GameSummaryDto, LimpetTrackDto, MapDto, MeDto, MessageDto, OfferResultDto, QuoteDto,
-  ShipyardEntryDto, StateDto, Commodity,
+  ActionResultDto, BookmarkDto, BountyDto, CorpPlanetDto, TavernPostDto, CorpDto, GameSettings, PlanetDto, FighterMode, GameSummaryDto, LimpetTrackDto, MapDto, MeDto, MessageDto, OfferResultDto, QuoteDto,
+  ReliefDto, ShipyardEntryDto, StateDto, Commodity,
 } from "@st/shared";
 
 export interface ShopInfo {
@@ -36,8 +36,14 @@ export const api = {
   adminSettings: (id: number) => call<{ id: number; name: string; settings: GameSettings }>("GET", `/api/admin/games/${id}/settings`),
   saveAdminSettings: (id: number, settings: Record<string, unknown>) => call<{ id: number; settings: GameSettings }>("POST", `/api/admin/games/${id}/settings`, { settings }),
   join: (id: number, alias: string) => call<StateDto>("POST", `/api/games/${id}/join`, { alias }),
+  leaveGame: (id: number, confirm: string) => call<{ ok: true }>("POST", `/api/games/${id}/leave`, { confirm }),
   state: (id: number) => call<StateDto>("GET", `/api/games/${id}/state`),
   map: (id: number) => call<MapDto>("GET", `/api/games/${id}/map`),
+  bookmarks: (id: number) => call<{ bookmarks: BookmarkDto[] }>("GET", `/api/games/${id}/bookmarks`).then((r) => r.bookmarks),
+  setBookmark: (id: number, sector: number, label: string) =>
+    call<{ bookmarks: BookmarkDto[] }>("POST", `/api/games/${id}/bookmarks/set`, { sector, label }).then((r) => r.bookmarks),
+  removeBookmark: (id: number, sector: number) =>
+    call<{ bookmarks: BookmarkDto[] }>("POST", `/api/games/${id}/bookmarks/remove`, { sector }).then((r) => r.bookmarks),
   move: (id: number, to: number) => call<ActionResultDto>("POST", `/api/games/${id}/move`, { to }),
   course: (id: number, to: number) => call<{ path: number[]; turns: number }>("GET", `/api/games/${id}/course?to=${to}`),
   autopilot: (id: number, to: number) =>
@@ -103,6 +109,8 @@ export const api = {
   steal: (id: number, commodity: Commodity, qty: number) => call<ActionResultDto>("POST", `/api/games/${id}/port/steal`, { commodity, qty }),
   rob: (id: number, amount: number) => call<ActionResultDto>("POST", `/api/games/${id}/port/rob`, { amount }),
   commission: (id: number) => call<StateDto>("POST", `/api/games/${id}/office/commission`),
+  relief: (id: number) => call<ReliefDto>("GET", `/api/games/${id}/relief`),
+  claimRelief: (id: number) => call<StateDto>("POST", `/api/games/${id}/relief/claim`),
   bounties: (id: number) => call<BountyDto[]>("GET", `/api/games/${id}/office/bounties`),
   postBounty: (id: number, alias: string, amount: number) => call<StateDto>("POST", `/api/games/${id}/office/bounty`, { alias, amount }),
   upgradePort: (id: number, commodity: Commodity, qty: number) => call<StateDto>("POST", `/api/games/${id}/port/upgrade`, { commodity, qty }),

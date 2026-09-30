@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GEAR, SHIP_TYPES, holdsCost, type BountyDto, type ShipyardEntryDto, type StateDto, type TavernPostDto } from "@st/shared";
+import { GEAR, SHIP_TYPES, holdsCost, type BountyDto, type ReliefDto, type ShipyardEntryDto, type StateDto, type TavernPostDto } from "@st/shared";
 import { api, fmt, type ShopInfo } from "./api";
 import { Icon } from "./Icon";
 
@@ -19,12 +19,14 @@ export function ShopPanel({ gameId, state, onState, stardock }: {
   const [wanted, setWanted] = useState<BountyDto[]>([]);
   const [board, setBoard] = useState<TavernPostDto[]>([]);
   const [keeper, setKeeper] = useState<string | null>(null);
+  const [relief, setRelief] = useState<ReliefDto | null>(null);
 
   useEffect(() => {
     api.shop(gameId).then(setInfo).catch(() => {});
     if (stardock) api.shipyard(gameId).then(setYard).catch(() => {});
     if (stardock) api.bounties(gameId).then(setWanted).catch(() => {});
     if (stardock) api.tavern(gameId).then(setBoard).catch(() => {});
+    if (stardock) api.relief(gameId).then(setRelief).catch(() => setRelief(null));
   }, [gameId, stardock, p.credits, p.ship, p.holds]);
 
   if (!info) return <p className="muted">Loading prices…</p>;
@@ -167,6 +169,16 @@ export function ShopPanel({ gameId, state, onState, stardock }: {
           </ul>
 
           <h3>Authority office</h3>
+          {/* The hardship fund: only shown to a pilot poor enough for it to matter, so it stays out of the way. */}
+          {relief && (relief.available || p.credits < relief.grant) && (relief.available ? (
+            <div className="alert">
+              <span>The hardship fund will stake you {fmt(relief.grant)} credits to get you trading again. Once a day, for pilots with nothing left.</span>
+              <button className="primary" disabled={busy}
+                onClick={() => run(async () => { onState(await api.claimRelief(gameId)); setRelief(null); return `The Authority staked you ${fmt(relief.grant)} credits.`; })}>
+                Claim a stake
+              </button>
+            </div>
+          ) : <div className="muted small">Hardship fund: {relief.reason}</div>)}
           {p.alignment >= info.commissionGrant ? <div className="muted small">You hold an Authority commission.</div>
             : p.alignment >= info.commissionAlignment ? (
               <div className="action-row">

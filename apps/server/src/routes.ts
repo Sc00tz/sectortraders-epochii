@@ -11,6 +11,7 @@ import * as corps from "./corps";
 import * as gear from "./gear";
 import * as office from "./office";
 import * as comms from "./comms";
+import * as bookmarks from "./bookmarks";
 
 /** Postgres codes for input that can't be a valid value (bad number text, out of range). */
 const BAD_INPUT = new Set(["22P02", "22003", "22023"]);
@@ -67,6 +68,10 @@ export async function gameRoutes(app: FastifyInstance) {
     } catch (e) { return fail(reply, e); }
   });
 
+  app.post<P & { Body: { confirm?: string } }>("/api/games/:id/leave", async (req, reply) => {
+    try { return await game.leaveGame(gid(req.params), req.user!.id, String(req.body?.confirm ?? "")); } catch (e) { return fail(reply, e); }
+  });
+
   app.get<P>("/api/games/:id/state", async (req, reply) => {
     try { return await game.getState(gid(req.params), req.user!.id); } catch (e) { return fail(reply, e); }
   });
@@ -113,6 +118,12 @@ export async function gameRoutes(app: FastifyInstance) {
   });
   app.post<P & { Body: { ship?: string } }>("/api/games/:id/shipyard/buy", async (req, reply) => {
     try { return await actions.buyShip(gid(req.params), req.user!.id, String(req.body?.ship)); } catch (e) { return fail(reply, e); }
+  });
+  app.get<P>("/api/games/:id/relief", async (req, reply) => {
+    try { return await actions.reliefOffer(gid(req.params), req.user!.id); } catch (e) { return fail(reply, e); }
+  });
+  app.post<P>("/api/games/:id/relief/claim", async (req, reply) => {
+    try { return await actions.claimRelief(gid(req.params), req.user!.id); } catch (e) { return fail(reply, e); }
   });
   app.post<P>("/api/games/:id/stardock/remove-limpets", async (req, reply) => {
     try { return await actions.removeLimpets(gid(req.params), req.user!.id); } catch (e) { return fail(reply, e); }
@@ -194,6 +205,21 @@ export async function gameRoutes(app: FastifyInstance) {
       const p = await game.requirePlayer(gid(req.params), req.user!.id);
       await markRead(p.id);
       return { ok: true };
+    } catch (e) { return fail(reply, e); }
+  });
+
+  // ----- sector bookmarks -----
+  app.get<P>("/api/games/:id/bookmarks", async (req, reply) => {
+    try { return { bookmarks: await bookmarks.listBookmarks(gid(req.params), req.user!.id) }; } catch (e) { return fail(reply, e); }
+  });
+  app.post<P & { Body: { sector?: number; label?: string } }>("/api/games/:id/bookmarks/set", async (req, reply) => {
+    try {
+      return { bookmarks: await bookmarks.setBookmark(gid(req.params), req.user!.id, Number(req.body?.sector), String(req.body?.label ?? "")) };
+    } catch (e) { return fail(reply, e); }
+  });
+  app.post<P & { Body: { sector?: number } }>("/api/games/:id/bookmarks/remove", async (req, reply) => {
+    try {
+      return { bookmarks: await bookmarks.removeBookmark(gid(req.params), req.user!.id, Number(req.body?.sector)) };
     } catch (e) { return fail(reply, e); }
   });
 

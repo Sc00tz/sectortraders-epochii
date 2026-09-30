@@ -26,6 +26,7 @@ export interface GameSettings {
   startingHolds: number;
   startingFighters: number;
   startingShip: string;
+  maxBookmarks: number; // named sectors a trader can keep (ours)
 
   // Economy
   commodityBasePrice: Record<Commodity, number>; // unverified defaults
@@ -143,6 +144,8 @@ export interface GameSettings {
   portUpgradeCostPerUnit: number; // credits per unit of added capacity (ours)
   portUpgradeCreditsPerAlignment: number; // spec: upgrading ports buys alignment at about 5,000 credits a point
   portMaxCapacity: number; // ours: no slot grows past this
+  reliefEnabled: boolean; // ours: the Authority stakes a pilot left with nothing to trade with
+  reliefGrant: number; // ours: credits the hardship fund pays out, once a day at most
 
   // Communications and the tavern
   tavernPostPrice: number; // spec: 100 credits per announcement
@@ -193,6 +196,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   startingHolds: 20,
   startingFighters: 30,
   startingShip: "merchant_cruiser",
+  maxBookmarks: 50,
 
   commodityBasePrice: { ore: 22, org: 36, equ: 58 },
   portMaxStockMin: 1000,
@@ -307,6 +311,8 @@ export const DEFAULT_SETTINGS: GameSettings = {
   portUpgradeCostPerUnit: 15,
   portUpgradeCreditsPerAlignment: 5000,
   portMaxCapacity: 30000,
+  reliefEnabled: true,
+  reliefGrant: 5000,
 
   tavernPostPrice: 100,
   tavernRumorPrice: 2000,

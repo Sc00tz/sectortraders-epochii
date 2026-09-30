@@ -71,6 +71,13 @@
       "when": 1790706912595,
       "tag": "0009_corp_emblems",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790774856647,
+      "tag": "0010_bookmarks_and_relief",
+      "breakpoints": true
     }
   ]
 }

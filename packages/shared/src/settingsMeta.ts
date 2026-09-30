@@ -63,6 +63,7 @@ export const SETTINGS_META: SettingMeta[] = [
   { key: "startingFighters", label: "Starting fighters", group: G.start, kind: "int", min: 0, max: 10000, when: "to traders who join after this" },
   { key: "startingShip", label: "Starting ship", group: G.start, kind: "ship", when: "to traders who join after this" },
   { key: "maxCourseLength", label: "Longest plotted course", group: G.start, kind: "int", min: 10, max: 1000, help: "In jumps." },
+  { key: "maxBookmarks", label: "Sector bookmarks per trader", group: G.start, kind: "int", min: 0, max: 500, help: "Named sectors a trader can keep. Lowering it doesn't remove any; traders just can't add more." },
   { key: "inactiveDays", label: "Remove inactive traders after (days)", group: G.start, kind: "int", min: 0, max: 365, when: RESET, help: "0 keeps them forever. Their fighters, mines and beacons go; their planets pass to their corporation, or become unowned." },
 
   ...COMMODITIES.map((c: Commodity): SettingMeta => ({ key: `commodityBasePrice.${c}`, label: `${COMMODITY_LABEL[c]} base price`, group: G.economy, kind: "int", min: 1, max: 100000 })),
@@ -170,6 +171,8 @@ export const SETTINGS_META: SettingMeta[] = [
   { key: "portUpgradeCostPerUnit", label: "Port upgrade price per unit of capacity", group: G.office, kind: "int", min: 1, max: 100000 },
   { key: "portUpgradeCreditsPerAlignment", label: "Upgrade credits per alignment point earned", group: G.office, kind: "int", min: 1, max: 10000000 },
   { key: "portMaxCapacity", label: "Largest a port's stock can grow", group: G.office, kind: "int", min: 100, max: 10000000 },
+  { key: "reliefEnabled", label: "Authority hardship fund", group: G.office, kind: "bool", help: "Lets a pilot with no credits, no cargo and no planets claim a stake at Keystone Station. Off means a ruined trader has no way back." },
+  { key: "reliefGrant", label: "Hardship fund payout", group: G.office, kind: "int", min: 1, max: 100000000, help: "Credits a stranded pilot is given, once a day at most." },
 
   { key: "tavernPostPrice", label: "Price of a tavern board notice", group: G.tavern, kind: "int", min: 0, max: 10000000 },
   { key: "tavernRumorPrice", label: "Price of a rumor", group: G.tavern, kind: "int", min: 0, max: 10000000 },
