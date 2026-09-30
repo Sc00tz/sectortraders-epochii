@@ -1,0 +1,57 @@
+# Sector Traders: Epoch II
+# Only the postgres volume holds game data. app and worker are stateless and safe to rebuild.
+name: sectortraders
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sectortraders}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-sectortraders}
+    volumes:
+      # Postgres 18+ images keep data under /var/lib/postgresql/<major>/docker, so mount the parent.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    image: sectortraders:latest
+    command: ["app"]
+    restart: unless-stopped
+    environment: &env
+      DATABASE_URL: postgres://${POSTGRES_USER:-sectortraders}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sectortraders}
+      TZ: ${TZ:-America/New_York}
+      RESET_CRON: ${RESET_CRON:-0 0 * * *}
+      SECURE_COOKIES: ${SECURE_COOKIES:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "${ST_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build: .
+    image: sectortraders:latest
+    command: ["worker"]
+    restart: unless-stopped
+    environment: *env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      app:
+        condition: service_started
+
+volumes:
+  pgdata:

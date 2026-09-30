@@ -1,0 +1,21 @@
+{
+  "name": "sectortraders",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Sector Traders: Epoch II - a web-based multiplayer space trading game",
+  "workspaces": ["packages/*", "apps/*"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "npm run build -w apps/web && npm run build -w apps/server",
+    "typecheck": "tsc -p packages/shared && tsc -p apps/server && tsc -p apps/web",
+    "test": "vitest run",
+    "dev:server": "npm run dev -w apps/server",
+    "dev:web": "npm run dev -w apps/web",
+    "db:generate": "npm run db:generate -w apps/server"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.2",
+    "@types/node": "^24.0.0"
+  }
+}

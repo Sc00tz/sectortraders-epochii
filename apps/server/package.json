@@ -1,0 +1,29 @@
+{
+  "name": "@st/server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts app",
+    "dev:worker": "tsx watch src/main.ts worker",
+    "build": "node build.mjs",
+    "start": "node dist/main.js app",
+    "db:generate": "drizzle-kit generate"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.2",
+    "@fastify/static": "^10.1.5",
+    "drizzle-orm": "^0.45.3",
+    "fastify": "^5.12.5",
+    "pg": "^8.23.0",
+    "pg-boss": "^12.35.0",
+    "socket.io": "^4.8.4"
+  },
+  "devDependencies": {
+    "@st/shared": "*",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15"
+  }
+}

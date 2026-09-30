@@ -1,0 +1,1 @@
+ALTER TABLE "corporations" ADD COLUMN "emblem" text;
